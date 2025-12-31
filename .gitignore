@@ -22,3 +22,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env files
+.env
+
+# Python caches/venv
+*.pyc
+__pycache__/
+backend/.venv/
+.venv/
+
+# Local source assets
+imagem/
+
+# Local database
+backend/data/*.db

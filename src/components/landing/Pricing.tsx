@@ -48,7 +48,7 @@ const Pricing = () => {
             </ul>
 
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/app">Comprar cartão</Link>
+              <Link to="/login">Comprar cartão</Link>
             </Button>
           </div>
 
@@ -98,7 +98,7 @@ const Pricing = () => {
             </ul>
 
             <Button variant="cta" className="w-full" asChild>
-              <Link to="/app">Comprar cartões</Link>
+              <Link to="/login">Comprar cartões</Link>
             </Button>
           </div>
 
@@ -144,7 +144,7 @@ const Pricing = () => {
             </ul>
 
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/app">Comprar cartões</Link>
+              <Link to="/login">Comprar cartões</Link>
             </Button>
           </div>
         </div>

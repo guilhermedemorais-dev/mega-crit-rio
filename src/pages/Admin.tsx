@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  BarChart3,
   CreditCard,
   DollarSign,
   Settings,
@@ -31,8 +30,10 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { clearStoredAuth } from "@/lib/auth";
+import Logo from "@/components/Logo";
 import {
   Table,
   TableBody,
@@ -58,7 +59,16 @@ interface LotteryResult {
   numeros: number[];
 }
 
+interface AdminUserResponse {
+  id: string;
+  username: string;
+  role: string;
+  credits: number;
+  api_key: string;
+}
+
 const Admin = () => {
+  const navigate = useNavigate();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
     { id: "1", name: "Stripe", provider: "stripe", enabled: true },
     { id: "2", name: "Mercado Pago", provider: "mercadopago", enabled: false },
@@ -84,6 +94,26 @@ const Admin = () => {
   const [lastSync, setLastSync] = useState<string | null>("2024-01-15 14:32");
   const [autoSync, setAutoSync] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const apiBase =
+    import.meta.env.VITE_API_BASE_URL ??
+    (import.meta.env.PROD ? "" : "http://localhost:8000");
+  const [adminApiKey, setAdminApiKey] = useState(
+    () => localStorage.getItem("mega_facil_api_key") ?? ""
+  );
+  const [adminUserId, setAdminUserId] = useState(
+    () => localStorage.getItem("mega_facil_user_id") ?? ""
+  );
+  const [affiliateUsername, setAffiliateUsername] = useState("");
+  const [affiliatePassword, setAffiliatePassword] = useState("");
+  const [affiliateCredits, setAffiliateCredits] = useState("0");
+  const [creditTargetType, setCreditTargetType] = useState<
+    "user_id" | "username"
+  >("user_id");
+  const [creditTarget, setCreditTarget] = useState("");
+  const [creditDelta, setCreditDelta] = useState("1");
+  const [creditReason, setCreditReason] = useState("ajuste_admin");
+  const [lastCreatedUser, setLastCreatedUser] =
+    useState<AdminUserResponse | null>(null);
 
   const mockStats = {
     totalRevenue: 12540.0,
@@ -118,6 +148,11 @@ const Admin = () => {
       title: "Configurações salvas",
       description: "Todas as alterações foram salvas com sucesso.",
     });
+  };
+
+  const handleLogout = () => {
+    clearStoredAuth();
+    navigate("/login");
   };
 
   const handleFetchFromCaixa = async () => {
@@ -191,6 +226,153 @@ const Admin = () => {
     });
   };
 
+  const handleAdminUserIdChange = (value: string) => {
+    setAdminUserId(value);
+    if (value) {
+      localStorage.setItem("mega_facil_user_id", value);
+    } else {
+      localStorage.removeItem("mega_facil_user_id");
+    }
+    if (creditTargetType === "user_id" && !creditTarget) {
+      setCreditTarget(value);
+    }
+  };
+
+  const handleAdminApiKeyChange = (value: string) => {
+    setAdminApiKey(value);
+    if (value) {
+      localStorage.setItem("mega_facil_api_key", value);
+    } else {
+      localStorage.removeItem("mega_facil_api_key");
+    }
+  };
+
+  const handleCreateAffiliate = async () => {
+    if (!adminApiKey) {
+      toast({
+        title: "API key ausente",
+        description: "Informe a API key do admin para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!affiliateUsername || !affiliatePassword) {
+      toast({
+        title: "Dados incompletos",
+        description: "Preencha usuário e senha do afiliado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const credits = Number.parseInt(affiliateCredits, 10) || 0;
+
+    try {
+      const response = await fetch(`${apiBase}/admin/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": adminApiKey,
+        },
+        body: JSON.stringify({
+          username: affiliateUsername,
+          password: affiliatePassword,
+          role: "affiliate",
+          credits,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message =
+          payload?.detail ?? "Não foi possível criar o afiliado.";
+        throw new Error(message);
+      }
+
+      const data = (await response.json()) as AdminUserResponse;
+      setLastCreatedUser(data);
+      toast({
+        title: "Afiliado criado",
+        description: `Usuário ${data.username} criado com sucesso.`,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Erro ao criar afiliado.";
+      toast({
+        title: "Falha ao criar afiliado",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAdjustCredits = async () => {
+    if (!adminApiKey) {
+      toast({
+        title: "API key ausente",
+        description: "Informe a API key do admin para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const delta = Number.parseInt(creditDelta, 10);
+    if (Number.isNaN(delta) || delta === 0) {
+      toast({
+        title: "Valor inválido",
+        description: "Informe um delta válido (positivo ou negativo).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!creditTarget) {
+      toast({
+        title: "Destino ausente",
+        description: "Informe o user_id ou username do destinatário.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const payload =
+      creditTargetType === "user_id"
+        ? { user_id: creditTarget, delta, reason: creditReason }
+        : { username: creditTarget, delta, reason: creditReason };
+
+    try {
+      const response = await fetch(`${apiBase}/admin/credits`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": adminApiKey,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        const message =
+          data?.detail ?? "Não foi possível ajustar créditos.";
+        throw new Error(message);
+      }
+
+      const data = (await response.json()) as { user_id: string; credits: number };
+      toast({
+        title: "Créditos atualizados",
+        description: `Novo saldo: ${data.credits}`,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Erro ao ajustar créditos.";
+      toast({
+        title: "Falha ao ajustar créditos",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
@@ -232,18 +414,21 @@ const Admin = () => {
               <span className="hidden sm:inline">Voltar ao site</span>
             </Link>
             <div className="h-6 w-px bg-border" />
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-primary-foreground" />
-              </div>
+            <div className="flex items-center gap-3">
+              <Logo className="h-7" />
               <span className="font-bold text-foreground">Admin</span>
             </div>
           </div>
 
-          <Button variant="cta" size="sm" onClick={handleSaveSettings}>
-            <Save className="w-4 h-4" />
-            <span className="hidden sm:inline">Salvar alterações</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              Sair
+            </Button>
+            <Button variant="cta" size="sm" onClick={handleSaveSettings}>
+              <Save className="w-4 h-4" />
+              <span className="hidden sm:inline">Salvar alterações</span>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -316,6 +501,10 @@ const Admin = () => {
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Configurações</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Usuários</span>
             </TabsTrigger>
           </TabsList>
 
@@ -771,6 +960,167 @@ const Admin = () => {
                   />
                 </div>
               </div>
+            </div>
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-card rounded-xl border border-border p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
+                  Credenciais do Admin
+                </h2>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-user-id">Admin User ID</Label>
+                    <Input
+                      id="admin-user-id"
+                      placeholder="user_id do admin"
+                      value={adminUserId}
+                      onChange={(event) =>
+                        handleAdminUserIdChange(event.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-api-key">Admin API Key</Label>
+                    <Input
+                      id="admin-api-key"
+                      type="password"
+                      placeholder="api_key do admin"
+                      value={adminApiKey}
+                      onChange={(event) =>
+                        handleAdminApiKeyChange(event.target.value)
+                      }
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    As credenciais ficam salvas no navegador para facilitar o uso.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-card rounded-xl border border-border p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
+                  Criar afiliado
+                </h2>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="affiliate-username">Usuário</Label>
+                    <Input
+                      id="affiliate-username"
+                      placeholder="afiliado01"
+                      value={affiliateUsername}
+                      onChange={(event) => setAffiliateUsername(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="affiliate-password">Senha</Label>
+                    <Input
+                      id="affiliate-password"
+                      type="password"
+                      placeholder="Senha do afiliado"
+                      value={affiliatePassword}
+                      onChange={(event) => setAffiliatePassword(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="affiliate-credits">Créditos iniciais</Label>
+                    <Input
+                      id="affiliate-credits"
+                      type="number"
+                      min="0"
+                      value={affiliateCredits}
+                      onChange={(event) => setAffiliateCredits(event.target.value)}
+                    />
+                  </div>
+                  <Button variant="cta" onClick={handleCreateAffiliate}>
+                    Criar afiliado
+                  </Button>
+                  {lastCreatedUser && (
+                    <div className="bg-secondary/30 rounded-lg p-3 text-xs text-muted-foreground">
+                      <p>user_id: {lastCreatedUser.id}</p>
+                      <p>api_key: {lastCreatedUser.api_key}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-xl border border-border p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-4">
+                Ajustar créditos
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Tipo do destino</Label>
+                  <Select
+                    value={creditTargetType}
+                    onValueChange={(value) =>
+                      setCreditTargetType(value as "user_id" | "username")
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user_id">User ID</SelectItem>
+                      <SelectItem value="username">Username</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="credit-target">Destino</Label>
+                  <Input
+                    id="credit-target"
+                    placeholder={
+                      creditTargetType === "user_id"
+                        ? "user_id do usuário"
+                        : "username do usuário"
+                    }
+                    value={creditTarget}
+                    onChange={(event) => setCreditTarget(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="credit-delta">Delta de créditos</Label>
+                  <Input
+                    id="credit-delta"
+                    type="number"
+                    placeholder="Ex: 5 ou -2"
+                    value={creditDelta}
+                    onChange={(event) => setCreditDelta(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="credit-reason">Motivo</Label>
+                  <Input
+                    id="credit-reason"
+                    placeholder="ajuste_admin"
+                    value={creditReason}
+                    onChange={(event) => setCreditReason(event.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3 mt-4">
+                <Button variant="cta" onClick={handleAdjustCredits}>
+                  Aplicar créditos
+                </Button>
+                {adminUserId && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setCreditTargetType("user_id");
+                      setCreditTarget(adminUserId);
+                    }}
+                  >
+                    Usar meu user_id
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Delta positivo adiciona créditos, negativo remove.
+              </p>
             </div>
           </TabsContent>
         </Tabs>

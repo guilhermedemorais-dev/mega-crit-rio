@@ -1,5 +1,5 @@
-import { BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
+import Logo from "@/components/Logo";
 
 const Footer = () => {
   return (
@@ -8,11 +8,8 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-accent-foreground" />
-              </div>
-              <span className="text-xl font-bold">MEGA FÁCIL</span>
+            <div className="flex items-center gap-3 mb-4">
+              <Logo className="h-10" />
             </div>
             <p className="text-primary-foreground/70 text-sm max-w-sm">
               Ferramenta auxiliar de análise estatística para a Mega-Sena.
@@ -35,7 +32,7 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <Link to="/app" className="hover:text-primary-foreground transition-colors">
+                <Link to="/login" className="hover:text-primary-foreground transition-colors">
                   Área do cliente
                 </Link>
               </li>
@@ -47,7 +44,7 @@ const Footer = () => {
             <h4 className="font-semibold mb-4">Administração</h4>
             <ul className="space-y-2 text-sm text-primary-foreground/70">
               <li>
-                <Link to="/admin" className="hover:text-primary-foreground transition-colors">
+                <Link to="/login" className="hover:text-primary-foreground transition-colors">
                   Painel Admin
                 </Link>
               </li>
