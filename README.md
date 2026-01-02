@@ -1,58 +1,55 @@
-# Welcome to your Lovable project
+# MEGA FÁCIL
 
-## Project info
+Backend e frontend do MEGA FÁCIL, um web app que gera combinações da Mega-Sena
+com base em análise estatística do histórico de sorteios. O sistema não prevê
+resultados futuros, não garante prêmio e atua apenas como ferramenta auxiliar.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Domínio oficial**: https://magaacil.online  
+**Desenvolvido por**: GMP Tecnologia
 
-## How can I edit this code?
+## Aviso legal
 
-There are several ways of editing your application.
+Este projeto é de uso restrito. O uso comercial é proibido sem autorização
+expressa do autor. Cópias e clones não autorizados poderão resultar em medidas
+legais.
 
-**Use Lovable**
+## Como posso editar este código? (PT-BR)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Há várias formas de editar a aplicação.
 
-Changes made via Lovable will be committed automatically to this repo.
+**Usar sua IDE**
 
-**Use your preferred IDE**
+Você pode clonar este repositório, editar localmente e fazer push.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Pré-requisito: Node.js & npm instalados (recomendado usar nvm).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Passo 1: Clonar o repositório
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Passo 2: Entrar na pasta do projeto
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
+# Passo 3: Instalar dependências
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Passo 4: Rodar o servidor de desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+**Editar direto no GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Abra o arquivo desejado.
+- Clique em “Edit” (ícone de lápis).
+- Faça as alterações e salve o commit.
 
-**Use GitHub Codespaces**
+**Usar GitHub Codespaces**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Abra a página do repositório.
+- Clique em “Code” → “Codespaces” → “New codespace”.
+- Edite, faça commit e push.
 
-## What technologies are used for this project?
-
-This project is built with:
+## Quais tecnologias são usadas? (PT-BR)
 
 - Vite
 - TypeScript
@@ -60,17 +57,14 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Como faço o deploy? (PT-BR)
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Para frontend estático: execute `npm run build` e publique a pasta `dist/`.
+Para backend Node: execute `node server/index.js` com as variáveis de ambiente.
 
-## Can I connect a custom domain to my Lovable project?
+## Posso conectar um domínio personalizado? (PT-BR)
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Sim. Aponte o DNS do domínio para o servidor/provedor onde o app está hospedado.
 
 ## Backend (FastAPI)
 
